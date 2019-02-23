@@ -1,8 +1,3 @@
-# hello-world
-Just another repository
+# National Data Science Competition
 
-This is my seond repository
-
-Li Chao is a retard
-
-Li Chao is pretty handsome tho
+The competition aims to classify into product categories of the data provided by shopee for the Data Science Competition.

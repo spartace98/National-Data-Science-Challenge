@@ -108,6 +108,7 @@ model.compile(optimizer = 'rmsprop', loss = 'categorical_crossentropy', metrics 
 
 # train the model
 history = model.fit(x_train, y_train, epochs = nb_epochs, batch_size = 10, validation_data = [x_val, y_val])
+# history = model.fit_generator(train_generator, epochs = nb_epochs, batch_size = 10, validation_data = validation_generator)
 
 train_acc = history.history['acc']
 train_loss = history.history['loss']

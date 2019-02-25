@@ -7,8 +7,9 @@ import Levenshtein
 class groupTextMeanings():
     def __init__(self):
         # categories = open("./data/categories.json")
-        self.data_train = open("./data/train.csv", "r", newline='')
+        self.data_train = open("./data/train.csv", 'r' , newline='')
         self.output_dir = "./data/words/"
+        self.outputFile = open("{}/out.txt".format(self.output_dir), 'w')
         self.categoryNo = 58
         # self.normalizationVector = {
         #     "words_dict" : np.array(range(-29, 29)),    # -29 to 28
@@ -36,8 +37,8 @@ class groupTextMeanings():
         i = 0
         for entry in reader:
             i += 1
-            if i > 5:
-                break
+            # if i > 5:
+            #     break
             # Print Progress
             print("Entry [{:>6}/666615] == Cat {:>2}: {}".format(i, entry["Category"], entry["title"]), end="\r")
             words = entry["title"].split(" ")
@@ -49,11 +50,11 @@ class groupTextMeanings():
                     self.words_dict[word][categ] += 1
                     self.parentAsso[word][self.getParent(entry["image_path"])] += 1
                 else:
-                    wArr = np.zeros((58,1), dtype=int)
+                    wArr = np.zeros(58, dtype=int)
                     wArr[categ] = 1
                     self.words_dict[word] = wArr
 
-                    wArr = np.zeros((3,1), dtype=int)
+                    wArr = np.zeros(3, dtype=int)
                     wArr[self.getParent(entry["image_path"])] = 1
                     self.parentAsso[word] = wArr
         self.data_train.close()
@@ -65,14 +66,24 @@ class groupTextMeanings():
             # parSum = np.dot(self.parentAsso[word], self.normalizationVector["parentAsso"])/np.sum(self.parentAsso[word]) + 1
             parentAssocArray = [self.parentAsso[word][0]] * 17 + [self.parentAsso[word][1]] * 14 + [self.parentAsso[word][2]] * 27
             tempArray = np.multiply(self.words_dict[word], np.array(parentAssocArray))
-            print(tempArray)
-            self.aggSum[word] = np.dot(tempArray, self.normalizationVector)/np.sum(tempArray) + 29
-            print("{:>4}: {}".format(self.aggSum[word], word))
+            # print(parentAssocArray)
+            # print(tempArray)
+            # print(self.normalizationVector)
+            aggSum = np.dot(self.normalizationVector, tempArray)/np.sum(tempArray) + 29
+            self.aggSum[word] = aggSum[0]
+            # self.outputFile.write("{:>4}: {}\n".format(self.aggSum[word], word))
 
-    def valueOf(self, word):
-        pass
+    def valueOf(self, _word):
+        if _word in self.aggSum:
+            # Stop if word already exists
+            return self.aggSum
+        else:
+            for word in self.aggSum:
+                dist = Levenshtein.distance(_word, word)
+                # We take the inverse so that closer words get more weightage
 
-groupTextMeanings()
+a = groupTextMeanings()
+print(a.valueOf("sexy"))
 
 
 

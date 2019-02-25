@@ -44,7 +44,7 @@ for path in train_dir:
 	image_matrix.append(x)
 	# print('Converted', n, 'image', 'Length of image matrix', len(image_matrix))
 	if n % 100000 == 0:
-	percentage = (n / 100000) / len(train_dir) * 100
+	percentage = ((n / 100000) / len(train_dir)) * 100
 	print('Converted ', '%.2f' %percentage, '%')
 
 	n += 1
@@ -81,7 +81,7 @@ test_datagen = ImageDataGenerator(rescale = 1./255)
 train_generator = train_datagen.flow(x_train, y_train, batch_size = batch_size)
 validation_generator = test_datagen.flow(x_val, y_val, batch_size = batch_size)
 
-# initialising the model layers
+# Initialising the model layers
 model = models.Sequential()
 model.add(layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (150, 150, 3)))
 model.add(layers.MaxPooling2D((2, 2)))

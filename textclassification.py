@@ -1,5 +1,4 @@
 # TEXT CLASSIFICATION
-
 import os, shutil
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,9 +12,8 @@ from keras.preprocessing.sequence import pad_sequences
 from keras import layers
 from keras import Sequential 
 
-# Reading csv file, delimiter = ','
-
 # DATAFRAME OF TRAINING SAMPLES
+# Reading csv file, delimiter = ','
 data_df = pd.read_csv('data/train.csv', delimiter = ',')
 print(data_df.head())
 print('------------------------------------------------')
@@ -39,7 +37,7 @@ nb_categories = targets.nunique()
 
 maxlen = max_sentence_length
 training_samples = len(texts)
-#Number of training samples found to be 666615
+# Number of training samples found to be 666615
 print('Number of training samples', training_samples)
 # split training set into train and validation
 training_samples = 600000
@@ -83,8 +81,10 @@ model.summary()
 # compiling the model
 model.compile(optimizer = 'rmsprop', loss = 'categorical_crossentropy', metrics = ['acc'])
 
+nb_epochs = 100
+
 # train the model
-history = model.fit(x_train, y_train, epochs = 100, batch_size = 10, validation_data = [x_val, y_val])
+history = model.fit(x_train, y_train, epochs = nb_epochs, batch_size = 200, validation_data = [x_val, y_val])
 
 train_acc = history.history['acc']
 train_loss = history.history['loss']
@@ -92,7 +92,7 @@ train_loss = history.history['loss']
 val_acc = history.history['val_acc']
 val_loss = history.history['val_loss']
 
-epoch_index = range(1, 10 + 1)
+epoch_index = range(1, nb_epochs + 1)
 
 plt.plot(epoch_index, train_acc, 'bo', label = 'Training Accuracy')
 plt.plot(epoch_index, val_acc, 'b', label = 'Validation Accuracy')

@@ -77,12 +77,6 @@ train_datagen = ImageDataGenerator(rescale = 1./255,
 									horizontal_flip = True)
 test_datagen = ImageDataGenerator(rescale = 1./255)
 
-# TEMPORARY CODE PLS REMOVE LATER
-x_train = image_matrix[:600000]
-y_train = targets[:600000]
-x_val = image_matrix[600000:]
-y_val = targets[600000:]
-
 train_generator = train_datagen.flow(x_train, y_train, batch_size = batch_size)
 validation_generator = test_datagen.flow(x_val, y_val, batch_size = batch_size)
 

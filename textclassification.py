@@ -75,7 +75,7 @@ y_val = targets[training_samples:]
 model = Sequential()
 model.add(layers.Embedding(max_words, 100, input_length = maxlen))
 model.add(layers.Flatten())
-model.add(Dropout())
+model.add(layers.Dropout(0.5))
 model.add(layers.Dense(128, activation = 'relu'))
 model.add(layers.Dense(nb_categories, activation = 'softmax'))
 model.summary()

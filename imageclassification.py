@@ -44,8 +44,8 @@ for path in train_dir:
 	image_matrix.append(x)
 	# print('Converted', n, 'image', 'Length of image matrix', len(image_matrix))
 	if n % 100000 == 0:
-	percentage = ((n / 100000) / len(train_dir)) * 100
-	print('Converted ', '%.2f' %percentage, '%')
+		percentage = n * 100 / len(train_dir)
+		print('Converted ', '%.2f' %percentage, '%')
 
 	n += 1
 

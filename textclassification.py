@@ -1,4 +1,5 @@
 # TEXT CLASSIFICATION
+
 import os, shutil
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,10 +11,11 @@ from keras import preprocessing
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras import layers
-from keras import Sequential 
+from keras import Sequential
+
+# Reading csv file, delimiter = ','
 
 # DATAFRAME OF TRAINING SAMPLES
-# Reading csv file, delimiter = ','
 data_df = pd.read_csv('data/train.csv', delimiter = ',')
 print(data_df.head())
 print('------------------------------------------------')
@@ -37,7 +39,7 @@ nb_categories = targets.nunique()
 
 maxlen = max_sentence_length
 training_samples = len(texts)
-# Number of training samples found to be 666615
+#Number of training samples found to be 666615
 print('Number of training samples', training_samples)
 # split training set into train and validation
 training_samples = 600000
@@ -73,18 +75,46 @@ y_val = targets[training_samples:]
 model = Sequential()
 model.add(layers.Embedding(max_words, 100, input_length = maxlen))
 model.add(layers.Flatten())
+model.add(layers.Dense(128, activation = 'tanh'))
 model.add(layers.Dropout(0.5))
-model.add(layers.Dense(128, activation = 'relu'))
 model.add(layers.Dense(nb_categories, activation = 'softmax'))
 model.summary()
 
 # compiling the model
 model.compile(optimizer = 'rmsprop', loss = 'categorical_crossentropy', metrics = ['acc'])
 
-nb_epochs = 100
+nb_epochs = 6
 
 # train the model
-history = model.fit(x_train, y_train, epochs = nb_epochs, batch_size = 200, validation_data = [x_val, y_val])
+history = model.fit(x_train, y_train, epochs = nb_epochs, batch_size = 600, validation_data = [x_val, y_val])
+
+print("Done training")
+# DATAFRAM OF TEST DATA
+test_df = pd.read_csv('data/test.csv')
+
+print("Reading test data")
+
+texts = test_df['title']
+ids = test_df['itemid']
+
+tokenizer = Tokenizer(num_words = max_words)
+tokenizer.fit_on_texts(texts)
+sequences = tokenizer.texts_to_sequences(texts)
+texts = pad_sequences(sequences, maxlen= maxlen)
+
+print("Predicting")
+predictions = model.predict(texts)
+
+print("Outputting")
+i = 0
+catNumber = np.zeros(predictions.shape[0])
+for p in predictions:
+	catNumber[i] = np.argmax(p)
+	i += 1
+output = np.hstack((ids.to_numpy().reshape((-1, 1)), catNumber.astype(int).reshape(-1, 1)))
+np.savetxt("data/submission.csv", output, fmt="%i", delimiter=",", header="itemid,Category", comments="")
+
+print("Done")
 
 train_acc = history.history['acc']
 train_loss = history.history['loss']

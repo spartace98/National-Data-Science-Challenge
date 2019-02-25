@@ -9,7 +9,7 @@ class groupTextMeanings():
         # categories = open("./data/categories.json")
         self.data_train = open("./data/train.csv", 'r' , newline='')
         self.output_dir = "./data/words/"
-        self.outputFile = open("{}/out.txt".format(self.output_dir), 'w')
+        # self.outputFile = open("{}/out.txt".format(self.output_dir), 'w')
         self.categoryNo = 58
         # self.normalizationVector = {
         #     "words_dict" : np.array(range(-29, 29)),    # -29 to 28
@@ -25,6 +25,7 @@ class groupTextMeanings():
             "mobile" : 2
         }
         self.aggSum  = dict()
+        self.dbWordCount = 0
 
         self.parseText()
         self.aggregateValues()
@@ -58,9 +59,11 @@ class groupTextMeanings():
                     wArr[self.getParent(entry["image_path"])] = 1
                     self.parentAsso[word] = wArr
         self.data_train.close()
+        self.dbWordCount = len(self.words_dict)
         print("\n")
 
     def aggregateValues(self):
+        print("Aggregating Values...", end="\r")
         for word in self.words_dict:
             # catSum = np.dot(self.words_dict[word], self.normalizationVector["words_dict"])/np.sum(self.words_dict[word]) + 29
             # parSum = np.dot(self.parentAsso[word], self.normalizationVector["parentAsso"])/np.sum(self.parentAsso[word]) + 1
@@ -72,18 +75,26 @@ class groupTextMeanings():
             aggSum = np.dot(self.normalizationVector, tempArray)/np.sum(tempArray) + 29
             self.aggSum[word] = aggSum[0]
             # self.outputFile.write("{:>4}: {}\n".format(self.aggSum[word], word))
+        print("Aggregating Values...done")
 
     def valueOf(self, _word):
+        print("Start Calc")
         if _word in self.aggSum:
             # Stop if word already exists
-            return self.aggSum
+            return self.aggSum[_word]
         else:
+            runningSum = 0
             for word in self.aggSum:
-                dist = Levenshtein.distance(_word, word)
-                # We take the inverse so that closer words get more weightage
+                # https://rawgit.com/ztane/python-Levenshtein/master/docs/Levenshtein.html#Levenshtein-jaro
+                runningSum += Levenshtein.jaro(_word, word) * (self.aggSum[word] - 29) # -29 to normalize
+            runningSum /= self.dbWordCount
+            return runningSum + 29
 
 a = groupTextMeanings()
-print(a.valueOf("sexy"))
+x = a.valueOf("ebooks")
+    # should give around 34
+print("End Calc")
+print(x)
 
 
 

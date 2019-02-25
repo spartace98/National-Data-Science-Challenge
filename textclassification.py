@@ -13,6 +13,11 @@ from keras.preprocessing.sequence import pad_sequences
 from keras import layers
 from keras import Sequential
 
+def unison_shuffled_copies(a, b):
+    assert len(a) == len(b)
+    p = np.random.permutation(len(a))
+    return a[p], b[p]
+
 # Reading csv file, delimiter = ','
 
 # DATAFRAME OF TRAINING SAMPLES
@@ -35,15 +40,12 @@ print('The maximum length of the texts is ', max_sentence_length)
 # extract the category of the image, this is the target values to be predicted from the training set
 targets = data_df['Category']
 
-nb_categories = targets.nunique()
+nb_categories = 58
 
 maxlen = max_sentence_length
 training_samples = len(texts)
 #Number of training samples found to be 666615
 print('Number of training samples', training_samples)
-# split training set into train and validation
-training_samples = 600000
-validation_samples = 66615
 max_words = 10000
 
 # encode text into vector 
@@ -62,20 +64,16 @@ print('Shape of data tensor', texts.shape)
 targets = keras.utils.to_categorical(targets, nb_categories)
 print('Shape of target tensor', targets.shape)
 
-x_train = texts[:training_samples]
-y_train = targets[:training_samples]
-print('Shape of x_train is ', x_train.shape)
-print('Shape of y_train is ', y_train.shape)
-
-x_val = texts[training_samples:]
-y_val = targets[training_samples:]
+texts, targets = unison_shuffled_copies(texts, targets)
 
 # MODEL LAYERS FOR DENSE MODEL
 # defining the structure of the model
 model = Sequential()
 model.add(layers.Embedding(max_words, 100, input_length = maxlen))
+model.add(layers.Conv1D(64, 2, activation='linear'))
+model.add(layers.PReLU())
 model.add(layers.Flatten())
-model.add(layers.Dense(128, activation = 'tanh'))
+model.add(layers.Dense(128, activation='tanh'))
 model.add(layers.Dropout(0.5))
 model.add(layers.Dense(nb_categories, activation = 'softmax'))
 model.summary()
@@ -83,10 +81,10 @@ model.summary()
 # compiling the model
 model.compile(optimizer = 'rmsprop', loss = 'categorical_crossentropy', metrics = ['acc'])
 
-nb_epochs = 6
+nb_epochs = 100
 
 # train the model
-history = model.fit(x_train, y_train, epochs = nb_epochs, batch_size = 600, validation_data = [x_val, y_val])
+history = model.fit(texts, targets, epochs = nb_epochs, batch_size = 600, validation_split = 0.15)
 
 print("Done training")
 # DATAFRAM OF TEST DATA

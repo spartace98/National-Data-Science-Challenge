@@ -21,7 +21,7 @@ for files in os.listdir(train_dir):
 # Data Preprocessing
 # for image
 # since the dataset isnt complicated items, a 150x150 pixel array should be sufficient
-img_width, img_height = 150, 150
+img_width, img_height = 224, 224
 nb_train_samples = len(os.listdir(train_dir))
 nb_validation_samples = len(os.listdir(validation_dir))
 batch_size = # to be decided
@@ -53,9 +53,11 @@ batch_size =
 image_input = Input(shape = (150, 150, 3), dtype = 'float32', name = 'imagetensor')
 image_model = layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (150, 150, 3))(image_input)
 image_model = layers.MaxPooling2D((2, 2))(image_model)
-image_model = layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (150, 150, 3))(image_model)
+image_model = layers.Conv2D(64, (3, 3), activation = 'relu', input_shape = (150, 150, 3))(image_model)
 image_model = layers.MaxPooling2D((2, 2))(image_model)
-image_model = layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (150, 150, 3))(image_model)
+image_model = layers.Conv2D(128, (3, 3), activation = 'relu', input_shape = (150, 150, 3))(image_model)
+image_model = layers.MaxPooling2D((2, 2))(image_model)
+image_model = layers.Conv2D(128, (3, 3), activation = 'relu', input_shape = (150, 150, 3))(image_model)
 image_model = layers.MaxPooling2D((2, 2))(image_model)
 image_model = layers.Flatten()(image_model)
 

@@ -37,13 +37,14 @@ nb_categories = targets.nunique()
 # read image directories
 n = 1
 image_matrix = []
+print('Image to matrix conversion starting...')
 for path in train_dir:
 	img = load_img(path, target_size = (150, 150))
 	x = image.img_to_array(img)
 	image_matrix.append(x)
 	# print('Converted', n, 'image', 'Length of image matrix', len(image_matrix))
-	if n % 50000 == 0:
-	percentage = (n / 50000) / len(train_dir) * 100
+	if n % 100000 == 0:
+	percentage = (n / 100000) / len(train_dir) * 100
 	print('Converted ', '%.2f' %percentage, '%')
 
 	n += 1
@@ -69,7 +70,7 @@ nb_validation_samples = len(x_val)
 batch_size = 10
 train_sample_size =  nb_train_samples // batch_size
 validation_sample_size = nb_validation_samples // batch_size
-epochs = 100
+nb_epochs = 100
 
 train_datagen = ImageDataGenerator(rescale = 1./255,
 									shear_range = 0.2, 
@@ -96,8 +97,8 @@ model.add(layers.MaxPooling2D((2, 2)))
 
 # adding a classifer on top of the convnet
 model.add(layers.Flatten())
+model.add(layers.Dense(128, activation = 'relu'))
 model.add(layers.Dropout(0.5))
-model.add(layers.Dense(64, activation = 'relu'))
 model.add(layers.Dense(58, activation = 'sigmoid'))
 
 model.summary()
@@ -105,7 +106,6 @@ model.summary()
 # compiling the model
 model.compile(optimizer = 'rmsprop', loss = 'categorical_crossentropy', metrics = ['acc'])
 
-nb_epochs = 100
 # train the model
 history = model.fit(x_train, y_train, epochs = nb_epochs, batch_size = 10, validation_data = [x_val, y_val])
 

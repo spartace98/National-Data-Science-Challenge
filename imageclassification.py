@@ -12,7 +12,7 @@ from keras.preprocessing import image
 
 # IMPORTING DATASET
 # creating links to the relevant folders 
-base_dir = '/Users/User/Desktop/NDSC'
+base_dir = 'images'
 # words in quotes is the name of the folder where images are stored
 train_dir = os.path.join(base_dir, 'train')
 # test_dir = os.path.join(base_dir, 'test')

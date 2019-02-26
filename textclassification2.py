@@ -1,7 +1,15 @@
-from encoder import *
-
+import os, shutil
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import csv
+
+import keras
+from keras import preprocessing
+from keras.preprocessing.sequence import pad_sequences
+from keras import layers
+from keras import Sequential
+
 
 training_data_filepath = "data/train.csv"
 chunk_size = 1000
@@ -39,24 +47,26 @@ def stringToNumberArray(title):
 				break
 
 			number += str(ord(char) - 87)
-		numberArr.append(float(number) / 10000.0)
+		numberArr.append(int(number))
 	return numberArr
 
 
+model = Sequential()
+model.add(layers.Conv1D(filters=30, kernel_size=2, input_shape=(None, None), activation= 'relu'))
+model.add(layers.Flatten())
+model.add(layers.Dense(128, activation = 'tanh'))
+model.add(layers.Dropout(0.5))
+model.add(layers.Dense(58, activation = 'softmax'))
+model.summary()
 
-nn = CNN(30, 100, number_of_categories)
+# compiling the model
+model.compile(optimizer = 'rmsprop', loss = 'categorical_crossentropy', metrics = ['acc'])
+
+
+
 for chunk in pd.read_csv(training_data_filepath, chunksize=chunk_size):
-	for i in range(10):
-		titles = chunk[csv_headers[1]].apply(stringToNumberArray)
-		expected_output = chunk[csv_headers[2]].apply(categoryToBinaryVector)
-		
-		combined = pd.concat([titles, expected_output], axis=1, join_axes=[titles.index])
+	titles = chunk[csv_headers[1]].apply(stringToNumberArray)
+	expected_output = chunk[csv_headers[2]].apply(categoryToBinaryVector)
 
-		for i in range(700):
-			nn.descend(combined['title'][i],  np.asarray([combined['Category'][i]], dtype=np.float32))
+	history = model.fit(titles[:800], expected_output[:800], epochs = 100, batch_size = 10, validation_data = [titles[800:], expected_output[800:]])
 
-		correct = 0
-		for i in range(300):
-			correct += nn.check(combined['title'][i+700],  np.asarray([combined['Category'][i+700]], dtype=np.float32))
-
-		print(correct / 300 * 100, "%")

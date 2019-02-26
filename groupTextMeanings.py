@@ -3,9 +3,17 @@
 import numpy as np
 import csv
 import Levenshtein
+import pickle
+import os
+import math
 
 class groupTextMeanings():
     def __init__(self):
+        if os.path.isfile("data/encoder.pkl"):
+            f = open("data/encoder.pkl", "rb")
+            self.aggSum, self.dbWordCount = pickle.load(f)
+            f.close()
+            return
         # categories = open("./data/categories.json")
         self.data_train = open("./data/train.csv", 'r' , newline='')
         self.output_dir = "./data/words/"
@@ -24,8 +32,10 @@ class groupTextMeanings():
             "fashion": 1,
             "mobile" : 2
         }
+
         self.aggSum  = dict()
         self.dbWordCount = 0
+
 
         self.parseText()
         self.aggregateValues()
@@ -51,11 +61,11 @@ class groupTextMeanings():
                     self.words_dict[word][categ] += 1
                     self.parentAsso[word][self.getParent(entry["image_path"])] += 1
                 else:
-                    wArr = np.zeros(58, dtype=int)
+                    wArr = np.zeros(58)
                     wArr[categ] = 1
                     self.words_dict[word] = wArr
 
-                    wArr = np.zeros(3, dtype=int)
+                    wArr = np.zeros(3)
                     wArr[self.getParent(entry["image_path"])] = 1
                     self.parentAsso[word] = wArr
         self.data_train.close()
@@ -72,29 +82,43 @@ class groupTextMeanings():
             # print(parentAssocArray)
             # print(tempArray)
             # print(self.normalizationVector)
-            aggSum = np.dot(self.normalizationVector, tempArray)/np.sum(tempArray) + 29
-            self.aggSum[word] = aggSum[0]
+            # aggSum = np.dot(self.normalizationVector, tempArray)/np.sum(tempArray) + 29
+            self.aggSum[word] = tempArray / np.max(tempArray)
             # self.outputFile.write("{:>4}: {}\n".format(self.aggSum[word], word))
+        
+        # Pickle aggSum and dbWordCount
+        f = open('data/encoder.pkl', 'wb')
+        pickle.dump([self.aggSum, self.dbWordCount], f)
+        f.close()
+
         print("Aggregating Values...done")
 
+    def scurve(self, x):
+        k = 0.99
+        if x <= 0.5:
+            return (k * 2 * x - 2 * x) / (4 * k * x - k - 1) * 0.5
+        else:
+            return 0.5 * ((-k) * 2 * (x - 0.5) - (2 * (x - 0.5))) / (2 * (-k) * 2 * (x - 0.5) + k - 1) + 0.5
+
     def valueOf(self, _word):
-        print("Start Calc")
         if _word in self.aggSum:
             # Stop if word already exists
             return self.aggSum[_word]
         else:
-            runningSum = 0
-            for word in self.aggSum:
+            prev = 0
+            for i, word in enumerate(self.aggSum):
                 # https://rawgit.com/ztane/python-Levenshtein/master/docs/Levenshtein.html#Levenshtein-jaro
-                runningSum += Levenshtein.jaro(_word, word) * (self.aggSum[word] - 29) # -29 to normalize
-            runningSum /= self.dbWordCount
-            return runningSum + 29
+                jaro = Levenshtein.jaro(_word, word)
+                if jaro > prev:
+                    nArr = self.aggSum[word]
+                    prev = jaro
+            return nArr
 
-a = groupTextMeanings()
-x = a.valueOf("ebooks")
-    # should give around 34
-print("End Calc")
-print(x)
+#a = groupTextMeanings()
+#print("End Calc")
+#print(a.valueOf("cream"))
+#print(a.valueOf("creamy"))
+# Should give similar to one before
 
 
 

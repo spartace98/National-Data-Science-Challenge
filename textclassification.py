@@ -70,18 +70,21 @@ texts, targets = unison_shuffled_copies(texts, targets)
 # defining the structure of the model
 model = Sequential()
 model.add(layers.Embedding(max_words, 100, input_length = maxlen))
-model.add(layers.Conv1D(64, 2, activation='linear'))
+model.add(layers.Conv1D(32, 2, activation='linear'))
+model.add(layers.PReLU())
+model.add(layers.MaxPooling1D(pool_size=2))
+model.add(layers.Conv1D(32, 2, activation='linear'))
 model.add(layers.PReLU())
 model.add(layers.Flatten())
-model.add(layers.Dense(128, activation='tanh'))
+model.add(layers.Dense(100, activation='tanh'))
 model.add(layers.Dropout(0.5))
 model.add(layers.Dense(nb_categories, activation = 'softmax'))
 model.summary()
 
 # compiling the model
-model.compile(optimizer = 'rmsprop', loss = 'categorical_crossentropy', metrics = ['acc'])
+model.compile(optimizer = 'adadelta', loss = 'categorical_crossentropy', metrics = ['accuracy'])
 
-nb_epochs = 100
+nb_epochs = 10
 
 # train the model
 history = model.fit(texts, targets, epochs = nb_epochs, batch_size = 600, validation_split = 0.15)

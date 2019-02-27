@@ -1,0 +1,8 @@
+Starting training using file data/allwords.txt
+Words processed: 6000K     Vocab size: 892K
+Vocab size (unigrams + bigrams): 518815
+Words in train file: 6091824
+Starting training using file data/allphrases.txt
+Vocab size: 29977
+Words in train file: 4858315
+Alpha: 0.000036  Progress: 99.90%  Words/thread/sec: 210.17k

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import word2vec
 import pickle
 

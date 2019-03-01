@@ -142,7 +142,7 @@ for iter in range(1, n_iters + 1):
 
     # Print iter number, loss, name and guess
     if iter % print_every == 0:
-        print("Iter: %6d %.1f%% %s" % (iter, iter / n_iters * 100, timeSince(start)), loss)
+        print("Iter: %6d %5.2f%% %s" % (iter, iter / n_iters * 100.0, timeSince(start)), loss)
 
     # Validate
     if iter % validate_every == 0:

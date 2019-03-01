@@ -98,7 +98,7 @@ import math
 
 n_iters = len(x_train) * 10
 print_every = 1000
-validate_every = 1000
+validate_every = 5000
 decay_every = 15000
 plot_every = 50
 
@@ -157,7 +157,7 @@ for iter in range(1, n_iters + 1):
             if len(newX) == 0:
             	continue
             output = lstm(newX)
-            losses += criterion(output, y_val[i]).item()
+            losses += criterion(output, torch.tensor([y_val[i]]).long()).item()
             if torch.max(output[0], 0)[1].item() == y_val[i]:
                 correct += 1
         correct = correct / len(x_val) * 100

@@ -32,7 +32,7 @@ f.close()
 words = list(dictionary.keys())
 
 
-# TRAIN EMBEDDINGS
+# COPY WORD2VEC EMBEDDINGS INTO NN.EMBEDDING LAYER
 vocab_size = len(dictionary)
 vector_size = 100
 pretrained_weights = list(dictionary.values())
@@ -46,17 +46,8 @@ embed = nn.Embedding(vocab_size, vector_size)
 # i-th word in the vocabulary
 embed.weight.data.copy_(torch.tensor(pretrained_weights))
 
-def randomTrainingExample():
-	i = random.randint(0, len(x_train) - 1)
-	newX = []
-	for word in x_train[i].split(" "):
-		if word in words:
-			newX.append(words.index(word))
 
-	newY = torch.tensor([y_train[i]])
-	return torch.tensor(newX).long(), newY.long()
-
-
+# DECLARE LSTM CLASS
 class LSTM(nn.Module):
     def __init__(self, embeddings, input_size, hidden_size, output_size):
         super(LSTM, self).__init__()
@@ -99,12 +90,13 @@ def train(x, y):
     return output, loss.item()
 
 
-# TRAINING
+############
+# TRAINING #
+############
 import time
 import math
 
 n_iters = len(x_train) * 10
-#n_iters = 10000
 print_every = 1000
 validate_every = 5000
 decay_every = 15000
@@ -123,13 +115,25 @@ def timeSince(since):
 
 start = time.time()
 
+# THIS FUNCTION WILL RETURN ONE RANDOM SET OF (INPUT, EXPECTED OUTPUT)
+# TAKEN FROM THE TRAINING DATA. CURRENTLY DOES ON-THE-FLY PROCESSING OF 
+# THE INPUT, MIGHT WANT TO MOVE THE PROCESSING TO BEFORE TRAINING
+def randomTrainingExample():
+	i = random.randint(0, len(x_train) - 1)
+	newX = []
+	for word in x_train[i].split(" "):
+		if word in words:
+			newX.append(words.index(word))
+
+	newY = torch.tensor([y_train[i]])
+	return torch.tensor(newX).long(), newY.long()
 
 
 print("Training the model")
 print("Number of iterations:", n_iters)
 
-
 for iter in range(1, n_iters + 1):
+	# Get a random example and train
     x, y = randomTrainingExample()
     if len(x) == 0:
         continue

@@ -69,7 +69,7 @@ def getNextTrainingExample():
         processChunk(current_chunk % len(x_train_chunked))
         current_training_example = -1
 
-    newY = torch.tensor([y_train[current_training_example + current_chunk * chunk_size]]).to(device)
+    newY = torch.tensor([y_train[current_training_example + (current_chunk % len(x_train_chunked)) * chunk_size]]).to(device)
     return x_train[current_training_example], newY.long()
 
 # PROCESS VALIDATION DATA

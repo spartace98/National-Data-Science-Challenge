@@ -29,7 +29,7 @@ class TrainingData:
         self.validation_percent = validation_percent
 
         self.x_train = []
-        for i, sentence in enumerate(self.data["title"]):
+        for sentence in self.data["title"]:
             if type == "sentences":
                 self.x_train.append(sentence)
             elif type == "words":
@@ -37,15 +37,18 @@ class TrainingData:
                     self.x_train.append(word)
         
         self.y_train = []
-        for i, category in enumerate(self.data["Category"]):
+        for category in self.data["Category"]:
             self.y_train.append(category)
 
         self.general_cat = []
-        self.general_cat_val = []
-        for i, filepath in enumerate(self.data["image_path"]):
+
+        self.image_paths = []
+        for filepath in self.data["image_path"]:
+            self.image_paths.append("images/" + filepath)
             self.general_cat.append(filepath.split("/")[0].split("_")[0])
 
-    def getTrainingData(self, category = 0):
+
+    def getTrainingData(self, category):
         indices = []
         for i, cat in enumerate(self.general_cat):
             if cat == category:
@@ -74,6 +77,34 @@ class TrainingData:
 
         return x_train, y_train, x_val, y_val, output_size
 
+    def getTrainingImages(self, category):
+        indices = []
+        for i, cat in enumerate(self.general_cat):
+            if cat == category:
+                indices.append(i)
+        train = int(round(len(indices) * (1.0 - self.validation_percent)))
+
+        image_train = []
+        y_train = []
+        image_val = []
+        y_val = []
+        
+        for i, index in enumerate(indices):
+            if i > train - 1:
+                image_val.append(self.image_paths[index])
+                y_val.append(self.y_train[index])
+                continue
+            image_train.append(self.image_paths[index])
+            y_train.append(self.y_train[index])
+
+        # CONVERT Y TO SET OF INDICES WITHIN THE CATEGORY ONLY
+        minimum = min(s for s in y_train)
+        y_train = [(y - minimum) for y in y_train]
+        y_val = [(y - minimum) for y in y_val]
+
+        output_size = len(set(y_val))
+
+        return image_train, y_train, image_val, y_val, output_size
 
 
 class TestData:

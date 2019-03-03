@@ -6,12 +6,14 @@ import random
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F 
+import torch.nn.functional as F
 
 import numpy as np
 
 from data import TrainingData
 
+# Use CUDA if available -> replacing every .cuda() with .to(device)
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 validation_percent = 0.1
 
@@ -38,13 +40,13 @@ vector_size = 100
 pretrained_weights = list(dictionary.values())
 # vocab_size is the number of words in your train, val and test set
 # vector_size is the dimension of the word vectors you are using
-embed = nn.Embedding(vocab_size, vector_size)
+embed = nn.Embedding(vocab_size, vector_size).to(device)
 
-# intialize the word vectors, pretrained_weights is a 
-# numpy array of size (vocab_size, vector_size) and 
+# intialize the word vectors, pretrained_weights is a
+# numpy array of size (vocab_size, vector_size) and
 # pretrained_weights[i] retrieves the word vector of
 # i-th word in the vocabulary
-embed.weight.data.copy_(torch.tensor(pretrained_weights))
+embed.weight.data.copy_(torch.tensor(pretrained_weights).to(device))
 
 
 # DECLARE LSTM CLASS
@@ -53,26 +55,26 @@ class LSTM(nn.Module):
         super(LSTM, self).__init__()
 
         self.hidden_size = hidden_size
-        self.lstm = nn.LSTM(input_size, hidden_size)
+        self.lstm = nn.LSTM(input_size, hidden_size).to(device)
 
         self.embeddings = embeddings
-        self.fc = nn.Linear(hidden_size, output_size)
+        self.fc = nn.Linear(hidden_size, output_size).to(device)
         self.hidden = self.initHidden()
 
     def forward(self, input):
         embed = self.embeddings(input)
         embed = embed.unsqueeze(1)
         lstm_out, _ = self.lstm(embed, self.hidden)
-        out = F.log_softmax(self.fc(lstm_out[-1]), dim=1)
+        out = F.log_softmax(self.fc(lstm_out[-1]), dim=1).to(device)
         return out
 
     def initHidden(self):
-        return (torch.zeros(1, 1, self.hidden_size), torch.zeros(1, 1, self.hidden_size))
+        return (torch.zeros(1, 1, self.hidden_size).to(device), torch.zeros(1, 1, self.hidden_size).to(device))
 
 
 lstm = LSTM(embed, 100, 200, 58)
 
-criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss().to(device)
 lr = 0.01
 optimizer = optim.Adam(lstm.parameters(), lr)
 
@@ -116,7 +118,7 @@ def timeSince(since):
 start = time.time()
 
 # THIS FUNCTION WILL RETURN ONE RANDOM SET OF (INPUT, EXPECTED OUTPUT)
-# TAKEN FROM THE TRAINING DATA. CURRENTLY DOES ON-THE-FLY PROCESSING OF 
+# TAKEN FROM THE TRAINING DATA. CURRENTLY DOES ON-THE-FLY PROCESSING OF
 # THE INPUT, MIGHT WANT TO MOVE THE PROCESSING TO BEFORE TRAINING
 def randomTrainingExample():
 	i = random.randint(0, len(x_train) - 1)
@@ -125,8 +127,8 @@ def randomTrainingExample():
 		if word in words:
 			newX.append(words.index(word))
 
-	newY = torch.tensor([y_train[i]])
-	return torch.tensor(newX).long(), newY.long()
+	newY = torch.tensor([y_train[i]]).to(device)
+	return torch.tensor(newX).to(device).long(), newY.long()
 
 
 print("Training the model")
@@ -153,11 +155,11 @@ for iter in range(1, n_iters + 1):
             for word in x.split(" "):
                 if word in words:
                     newX.append(words.index(word))
-            newX = torch.tensor(newX).long()
+            newX = torch.tensor(newX).to(device).long()
             if len(newX) == 0:
             	continue
             output = lstm(newX)
-            losses += criterion(output, torch.tensor([y_val[i]]).long()).item()
+            losses += criterion(output, torch.tensor([y_val[i]]).to(device).long()).item()
             if torch.max(output[0], 0)[1].item() == y_val[i]:
                 correct += 1
         correct = correct / len(x_val) * 100

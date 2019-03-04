@@ -19,7 +19,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # ADJUSTABLE PARAMETERS
 validation_percent = 0.1
-category = "fashion"
+category = "mobile"
 chunk_size = 20000
 
 

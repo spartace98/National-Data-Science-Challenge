@@ -112,10 +112,9 @@ model.add(layers.Embedding(max_features,
                     input_length=maxlen, 
                     weights = [embedding_matrix], 
                     trainable = False))
-model.add(layers.Dropout(0.2))
-model.add(layers.Conv1D(64, 3, activation='relu'))
-model.add(layers.MaxPooling1D(pool_size=4))
-model.add(layers.LSTM(300))
+model.add(layers.Conv1D(128, 3, activation='relu'))
+model.add(layers.MaxPooling1D())
+model.add(layers.LSTM(256, dropout=0.1, recurrent_dropout=0.1))
 # model.add(layers.LSTM(300, return_sequences=True, dropout=0.1, recurrent_dropout=0.1))
 # model.add(layers.Flatten())
 model.add(layers.Dense(58, activation='softmax'))
@@ -124,7 +123,7 @@ model.summary()
 # compiling the model
 model.compile(optimizer = 'rmsprop', loss = 'categorical_crossentropy', metrics = ['acc'])
 
-nb_epochs = 10
+nb_epochs = 6
 
 # train the model
 history = model.fit(x_train, y_train, epochs = nb_epochs, batch_size = 600, validation_split=0.1)
@@ -138,7 +137,7 @@ print("Reading test data")
 texts = test_df['title']
 ids = test_df['itemid']
 
-tokenizer = Tokenizer(num_words = max_words)
+tokenizer = Tokenizer(num_words = max_features)
 tokenizer.fit_on_texts(texts)
 sequences = tokenizer.texts_to_sequences(texts)
 texts = pad_sequences(sequences, maxlen= maxlen)
@@ -152,8 +151,8 @@ catNumber = np.zeros(predictions.shape[0])
 for p in predictions:
 	catNumber[i] = np.argmax(p)
 	i += 1
-output = np.hstack((ids.to_numpy().reshape((-1, 1)), catNumber.astype(int).reshape(-1, 1)))
-np.savetxt("data/submission.csv", output, fmt="%i", delimiter=",", header="itemid,Category", comments="")
+output = np.hstack((ids.values.reshape((-1, 1)), catNumber.astype(int).reshape(-1, 1)))
+np.savetxt("data/submission-lc.csv", output, fmt="%i", delimiter=",", header="itemid,Category", comments="")
 
 print("Done")
 

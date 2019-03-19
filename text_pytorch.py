@@ -199,7 +199,7 @@ for iter in range(1, n_iters + 1):
         correct = correct / len(x_val) * 100
         loss = losses / len(x_val)
         if correct > validation_accuracy:
-            torch.save(model.state_dict(), "models/" + category + ".text.pth")
+            torch.save(lstm.state_dict(), "models/" + category + ".text.pth")
             validation_accuracy = correct
         print("val_loss:", loss, " val_acc:", correct, "%")
 

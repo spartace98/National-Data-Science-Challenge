@@ -158,6 +158,7 @@ plot_every = 50
 
 # Keep track of losses for plotting
 current_loss = 0
+validation_accuracy = 0
 all_losses = []
 
 def timeSince(since):
@@ -197,6 +198,9 @@ for iter in range(1, n_iters + 1):
                 correct += 1
         correct = correct / len(x_val) * 100
         loss = losses / len(x_val)
+        if correct > validation_accuracy:
+            torch.save(lstm.state_dict(), "models/" + category + ".text.pth")
+            validation_accuracy = correct
         print("val_loss:", loss, " val_acc:", correct, "%")
 
     # Decay learning rate

@@ -1,9 +1,11 @@
 # DATA PREPROCESSING CLASS
 from torch.utils.data import Dataset
+import torch 
 import numpy as np
 import torch
 import cv2
 
+# Use CUDA if available -> replacing every .cuda() with .to(device)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 class DatasetProcessing(Dataset):
@@ -16,8 +18,8 @@ class DatasetProcessing(Dataset):
 	#used to retrieve the X and y index value and return it
     def __getitem__(self, index):
     	img = cv2.imread(self.data_dir[index], 1)
-    	img_tensor = self.transform(np.array(img))
-    	img_target = torch.tensor(self.target[index], dtype=torch.long)
+    	img_tensor = self.transform(np.array(img)).to(device)
+    	img_target = self.target[index].type(torch.long)
 
     	return img_tensor, img_target
 

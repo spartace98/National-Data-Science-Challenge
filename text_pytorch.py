@@ -19,7 +19,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # ADJUSTABLE PARAMETERS
 validation_percent = 0.1
-category = "mobile"
+category = "fashion"
 chunk_size = 20000
 
 
@@ -122,7 +122,7 @@ class LSTM(nn.Module):
 
 
 # MODEL PARAMETERS
-hidden_size = 100
+hidden_size = 150
 lr = 0.01
 
 lstm = LSTM(embed, 100, hidden_size, output_size).to(device)
@@ -153,12 +153,12 @@ import math
 n_iters = (len(x_train_chunked) * (chunk_size - 1) + len(x_train_chunked[-1])) * 10
 print_every = 1000
 validate_every = 5000
-decay_every = len(x_train)
+decay_every = n_iters / 10.0
 plot_every = 50
 
 # Keep track of losses for plotting
 current_loss = 0
-validation_accuracy = 0
+validation_accuracy = 51
 all_losses = []
 
 def timeSince(since):

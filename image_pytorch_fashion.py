@@ -37,11 +37,9 @@ normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0
 
 train_transform = transforms.Compose([
 								transforms.ToPILImage(),
-								transforms.RandomAffine(degrees = 60, 
-														translate = (0.2, 0.2), 
-														scale = (0.7, 1.3)),
 								transforms.Resize((128, 128)),
 								transforms.RandomHorizontalFlip(),
+								transforms.RandomRotation(60),
 								transforms.ToTensor(),
 								normalize])
 
@@ -105,22 +103,20 @@ def train(model):
 
 		# Validate after every 21000 data (prints every 70 batches)
 		if (i+1) * batch_size % validate_every == 0:
-			start2 = time.time()
 			val_acc, val_loss = validate(model, batch_size)
 			acc_l.append(val_acc)
 			loss_l.append(val_loss)
 
+		# empty cache memory
+		torch.cuda.empty_cache()
+
 		# Validate when last batch is trained on, then break out of loop for next batch
 		if x.shape[0] < batch_size:
-			start3 = time.time()
 			val_acc, val_loss = validate(model, batch_size)
 			acc_l.append(val_acc)
 			loss_l.append(val_loss)
 
 			break
-
-		# empty cache memory
-		torch.cuda.empty_cache()
 
 	# plot val acc and val loss graph after every epoch 
 	plt.plot(acc_l, label = 'Validation Accuracy')
@@ -133,6 +129,7 @@ def validate(model, batch_size):
 	global current_val_acc
 	correct = 0
 	losses = 0
+	start2 = time.time()
 	model.eval()
 	with torch.no_grad():
 		for i, (x_temp, y_temp) in enumerate(val_loader):

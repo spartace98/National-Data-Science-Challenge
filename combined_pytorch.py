@@ -97,7 +97,7 @@ class LSTM(nn.Module):
 
 td = TrainingData(validation_percent)
 
-for cat in ["beauty", "mobile", "fashion"]:
+for cat in ["mobile", "beauty", "fashion"]:
     x_train, y_train, x_val, y_val, output_size = td.getTrainingData(cat)
 
     total_samples = len(y_train) + len(y_val)
@@ -150,7 +150,7 @@ for cat in ["beauty", "mobile", "fashion"]:
                                  nn.Linear(512, output_size),
                                  nn.LogSoftmax(dim=1))
 
-    image_model.load_state_dict(torch.load("models/"+cat+".image.pth", map_location='cpu'))
+    image_model.load_state_dict(torch.load("models/"+cat+".image.pth"))
     image_model.to(device)
     image_model.eval()
     print(image_model)

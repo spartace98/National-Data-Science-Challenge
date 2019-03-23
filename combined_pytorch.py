@@ -58,7 +58,9 @@ image_transform = transforms.Compose([
 
 ############################################################################
 
-def processSentence(sentence):
+total_samples = 1.0
+
+def processSentence(sentence, i):
     newX = []
     for word in sentence.split(" "):
         if word in words:
@@ -68,6 +70,7 @@ def processSentence(sentence):
             highest_index = jaros.index(max(jaros))
             newX.append(highest_index)
     newX = torch.tensor(newX).to(device).long()
+    print(str(i/total_samples*100.0)+"%\r", end="")
     return newX
 
 # DECLARE LSTM CLASS
@@ -94,9 +97,10 @@ class LSTM(nn.Module):
 
 td = TrainingData(validation_percent)
 
-for cat in ["fashion", "beauty", "mobile"]:
-
+for cat in ["beauty", "mobile", "fashion"]:
     x_train, y_train, x_val, y_val, output_size = td.getTrainingData(cat)
+
+    total_samples = len(y_train) + len(y_val)
 
     print(cat)
 
@@ -108,31 +112,30 @@ for cat in ["fashion", "beauty", "mobile"]:
     model.to(device)
     for param in model.parameters():
         param.requires_grad = False
-    
+
     model.eval()
     print(model)
 
     print("Processing training text")
 
-    x_train = [model(processSentence(sentence)) for sentence in x_train]
+    x_train = [model(processSentence(sentence, i)) for i, sentence in enumerate(x_train)]
     y_train = [torch.tensor(y).to(device).long() for y in y_train]
 
     print("Processing validation text")
 
-    x_val = [model(processSentence(sentence)) for sentence in x_val]
+    x_val = [model(processSentence(sentence, i)) for i, sentence in enumerate(x_val)]
     y_val = [torch.tensor(y).to(device).long() for y in y_val]
 
     # ADD UR IMAGE CODE HERE, PROCESS IMAGE TRAIN AND IMAGE VAL AND OUTPUT A [0, 0, 0.... 1, 0, 0] TENSOR
     # @LICHAO
+    image_train_X, image_train_y, image_val_X, image_val_y, output_size = td.getTrainingImages(cat)
 
-    image_train_X, _, image_val_X, _, output_size = td.getTrainingImages(cat)
-
-    dset_train = DatasetProcessing(image_train_X, [], image_transform)
+    dset_train = DatasetProcessing(image_train_X, image_train_y, image_transform)
     train_loader = torch.utils.data.DataLoader(dset_train, batch_size=batch_size,
                                           shuffle=True, num_workers=0)
 
 
-    dset_val = DatasetProcessing(image_val_X, [], image_transform)
+    dset_val = DatasetProcessing(image_val_X, image_val_y, image_transform)
     val_loader = torch.utils.data.DataLoader(dset_val, batch_size=batch_size,
                                           shuffle=True, num_workers=0)
 
@@ -147,7 +150,7 @@ for cat in ["fashion", "beauty", "mobile"]:
                                  nn.Linear(512, output_size),
                                  nn.LogSoftmax(dim=1))
 
-    image_model.load_state_dict(torch.load("models/"+cat+".image.pth"))
+    image_model.load_state_dict(torch.load("models/"+cat+".image.pth", map_location='cpu'))
     image_model.to(device)
     image_model.eval()
     print(image_model)
@@ -174,6 +177,7 @@ for cat in ["fashion", "beauty", "mobile"]:
         if len(x_temp) < batch_size:
             break
 
-    image_X_val = torch.cat((image_X_val), 0)
+    image_X_val = torch.cat((image_X_val), 0)   
+    
 
     pickle.dump([x_train, image_X_train, y_train, x_val, image_X_val, y_val], open("data/" + cat + ".pickle", "wb"))

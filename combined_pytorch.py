@@ -8,10 +8,15 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import math
 
 import numpy as np
 
 from data import TrainingData
+from imagedatapreprocessing import DatasetProcessing
+from torchvision import models, transforms
+from torch.utils.data import Dataset, DataLoader
+from PIL import Image
 
 # Use CUDA if available -> replacing every .cuda() with .to(device)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -41,6 +46,17 @@ embed = nn.Embedding(vocab_size, vector_size).to(device)
 # i-th word in the vocabulary
 embed.weight.data.copy_(torch.tensor(pretrained_weights).to(device))
 
+######################### IMAGE DATA PREPROCESSING ########################
+batch_size = 200
+normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
+
+image_transform = transforms.Compose([
+                                transforms.ToPILImage(),
+                                transforms.Resize((128, 128)),
+                                transforms.ToTensor(),
+                                normalize])
+
+############################################################################
 
 def processSentence(sentence):
     newX = []
@@ -79,6 +95,7 @@ class LSTM(nn.Module):
 td = TrainingData(validation_percent)
 
 for cat in ["fashion", "beauty", "mobile"]:
+
     x_train, y_train, x_val, y_val, output_size = td.getTrainingData(cat)
 
     print(cat)
@@ -97,11 +114,66 @@ for cat in ["fashion", "beauty", "mobile"]:
     x_val = [model(processSentence(sentence)) for sentence in x_val]
     y_val = [torch.tensor(y).to(device).long() for y in y_val]
 
-
-    image_train, _, image_val, _ = td.getTrainingImages(cat)
-
     # ADD UR IMAGE CODE HERE, PROCESS IMAGE TRAIN AND IMAGE VAL AND OUTPUT A [0, 0, 0.... 1, 0, 0] TENSOR
     # @LICHAO
 
+    image_train_X, image_train_y, image_val_X, image_val_y, output_size = td.getTrainingImages(cat)
+
+    dset_train = DatasetProcessing(image_train_X, image_train_y, image_transform)
+    train_loader = torch.utils.data.DataLoader(dset_train, batch_size=batch_size,
+                                          shuffle=True, num_workers=0)
+
+
+    dset_val = DatasetProcessing(image_val_X, image_val_y, image_transform)
+    val_loader = torch.utils.data.DataLoader(dset_val, batch_size=batch_size,
+                                          shuffle=True, num_workers=0)
+
+    image_model = models.resnet50(pretrained=True)
+
+    for param in image_model.parameters():
+        param.requires_grad = False
+    
+    image_model.fc = nn.Sequential(nn.Linear(2048, 512),
+                                 nn.ReLU(),
+                                 nn.Dropout(0.2),
+                                 nn.Linear(512, output_size),
+                                 nn.LogSoftmax(dim=1))
+
+    image_model.load_state_dict(torch.load("models/"+cat+".image.pth"))
+    image_model.to(device)
+    image_model.eval()
+    print(image_model)
+
+    nb_batches = round(len(image_train_X) / batch_size)
+    image_X_train = []
+    image_y_train = []
+    image_X_val = []
+    image_y_val = []
+
+    for i, (x_temp, y_temp) in enumerate(train_loader):
+        output = image_model(x_temp)
+        image_X_train.append(output)
+        image_y_train.append(y_temp)
+        print('Progress:', 100 * i / nb_batches, '%')
+
+        if len(x_temp) < batch_size:
+            break
+
+    image_X_train = torch.cat((image_X_train), 0)
+    image_y_train = torch.cat((image_y_train), 0)
+    print(image_X_train.size(), image_y_train.size())
+
+    for i, (x_temp, y_temp) in enumerate(val_loader):
+        output = image_model(x_temp)
+        image_X_val.append(output)
+        image_y_val.append(y_temp)
+        print('Progress:', 100 * i / nb_batches, '%')
+
+        if len(x_temp) < batch_size:
+            break
+
+    image_X_val = torch.cat((image_X_val), 0)
+    image_y_val = torch.cat((image_y_val), 0)
+    print(image_X_val.size(), image_y_val.size())
 
     pickle.dump([x_train, y_train, x_val, y_val], open("data/" + cat + ".pickle", "wb"))

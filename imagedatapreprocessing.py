@@ -24,4 +24,4 @@ class DatasetProcessing(Dataset):
     	return img_tensor, img_target
 
     def __len__(self): #returns the length of the data
-        return len(list(self.data_dir))
+        return len(self.data_dir)

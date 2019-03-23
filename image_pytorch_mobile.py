@@ -32,14 +32,16 @@ print('Train on', len(image_train), 'Test on', len(image_val))
 print(image_train[0])
 
 ######################### DATA PREPROCESSING ########################
-batch_size = 300
+batch_size = 200
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
 
 train_transform = transforms.Compose([
 								transforms.ToPILImage(),
+								transforms.RandomAffine(degrees = 60, 
+														translate = (0.2, 0.2), 
+														scale = (0.7, 1.3)),
 								transforms.Resize((128, 128)),
 								transforms.RandomHorizontalFlip(),
-								transforms.RandomRotation(60),
 								transforms.ToTensor(),
 								normalize])
 
@@ -94,14 +96,14 @@ def train(model):
 		loss.backward()
 		optimizer.step()
 
-		# prints loss after every 3000 training data (prints every 10 batches)
+		# prints loss after every 4000 training data (prints every 10 batches)
 		if (i+1) * batch_size % loss_every == 0:
 			img_total = len(image_train)
 			nb_batches = img_total / batch_size
 			progress = round(100 * (i+1) / nb_batches , 2)
 			print('Progress:', progress, '%' ,' Time passed:', timeSince(start), ' Training Loss:', loss.item())
 
-		# Validate after every 21000 data (prints every 70 batches)
+		# Validate after every 20000 data (prints every 70 batches)
 		if (i+1) * batch_size % validate_every == 0:
 			val_acc, val_loss = validate(model, batch_size)
 			acc_l.append(val_acc)
@@ -115,14 +117,10 @@ def train(model):
 			val_acc, val_loss = validate(model, batch_size)
 			acc_l.append(val_acc)
 			loss_l.append(val_loss)
-
 			break
 
-	# plot val acc and val loss graph after every epoch 
-	plt.plot(acc_l, label = 'Validation Accuracy')
-	plt.plot(loss_l, label = 'Validation Loss')
-	plt.legend()
-	plt.show()
+	# plot val acc and val loss graph after every epoch
+	return acc_l, loss_l
 
 # validate on unseen results, save weights if model has more accurate predictions
 def validate(model, batch_size):
@@ -133,8 +131,12 @@ def validate(model, batch_size):
 	model.eval()
 	with torch.no_grad():
 		for i, (x_temp, y_temp) in enumerate(val_loader):
-			# break out of loop once 21000 val images have been selected
-			if i == (validate_every / batch_size):
+			# # break out of loop once 21000 val images have been selected
+			# if i == (validate_every / batch_size):
+			# 	break
+
+			# break out of loop once 10000 val images have been selected
+			if i == 50:
 				break
 
 			x_temp, y_temp = x_temp.to(device), y_temp.to(device)
@@ -145,8 +147,8 @@ def validate(model, batch_size):
 
 			correct += predicted.eq(y_temp.data.view_as(predicted)).to(device).sum().item() 
 
-	val_acc = 100 * correct / validate_every
-	val_loss = losses / validate_every
+	val_acc = 100 * correct / 10000
+	val_loss = losses / 10000
 
 	print("val_loss:", val_loss, " val_acc:", val_acc, "%", 'time passed:', timeSince(start2))
 			
@@ -165,9 +167,9 @@ def timeSince(since):
     return '%dm %ds' % (m, s)
 
 ######################  TRAINING  ###############################
-loss_every = 3000
-validate_every = 21000
-current_val_acc = 0
+loss_every = 4000
+validate_every = 20000
+current_val_acc = 37.98
 
 start = time.time()
 
@@ -180,6 +182,11 @@ nb_epochs = 2
 for epoch in range(nb_epochs):
 	print('Running Training Epoch', epoch + 1)
 
-	train(model)
+	acc_l, loss_l = train(model)
+
+	plt.plot(acc_l, label = 'Validation Accuracy')
+	plt.plot(loss_l, label = 'Validation Loss')
+	plt.legend()
+	plt.show()
 
 	print('Finished Training Epoch', epoch + 1)
